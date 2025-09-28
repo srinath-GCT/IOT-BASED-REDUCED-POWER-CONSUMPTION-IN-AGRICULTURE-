@@ -1,0 +1,67 @@
+// ------------------ SOIL MOISTURE + MOTOR DRIVER + LED ------------------
+const int sensorPin = 34;   // Soil moisture sensor
+const int ledPin = 26;      // LED indicator pin
+int sensorValue = 0;
+int moisturePercent = 0;
+int threshold = 30;         
+
+// ------------------ BTS7960 PINS ------------------
+const int RPWM = 18;  // Forward PWM
+const int LPWM = 19;  // Reverse PWM
+const int R_EN = 23;  // Right enable
+const int L_EN = 22;  // Left enable
+
+void setup() {
+  Serial.begin(115200);
+
+  // Servo setup
+ 
+
+  // Motor driver pins
+  pinMode(RPWM, OUTPUT);
+  pinMode(LPWM, OUTPUT);
+  pinMode(R_EN, OUTPUT);
+  pinMode(L_EN, OUTPUT);
+
+  // LED
+  pinMode(ledPin, OUTPUT);
+
+  // Disable motor at start
+  digitalWrite(R_EN, HIGH);
+  digitalWrite(L_EN, HIGH);
+  analogWrite(RPWM, 0);
+  analogWrite(LPWM, 0);
+
+  Serial.println("System Ready...");
+}
+
+void loop() {
+
+  // ------------------ SOIL MOISTURE ------------------
+  sensorValue = analogRead(sensorPin);
+  moisturePercent = map(sensorValue, 4095, 500, 0, 100);
+  moisturePercent = constrain(moisturePercent, 0, 100);
+
+  Serial.print("Moisture: ");
+  Serial.print(moisturePercent);
+  Serial.println("%");
+
+  if (moisturePercent < threshold) {
+    Serial.println("Soil Dry → Motor ON, LED ON");
+    digitalWrite(ledPin, HIGH);
+
+    // Forward motor
+    analogWrite(LPWM, 0);       // Stop reverse
+    analogWrite(RPWM, 200);     // Adjust speed (0-255)
+
+  } else {
+    Serial.println("Soil Wet → Motor OFF, LED OFF");
+    digitalWrite(ledPin, LOW);
+
+    // Stop motor
+    analogWrite(RPWM, 0);
+    analogWrite(LPWM, 0);
+  }
+
+  delay(1000);
+}

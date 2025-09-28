@@ -1,0 +1,48 @@
+#include <ESP32Servo.h>
+
+// Pin definitions
+#define LDR_LEFT 34   // Left LDR sensor
+#define LDR_RIGHT 35  // Right LDR sensor
+#define SERVO_PIN 18  // Servo motor pin
+
+Servo myServo;
+int pos = 90; // Start at center (90 degrees)
+const int TOLERANCE = 100; // Tolerance value
+
+void setup() {
+  Serial.begin(115200);
+
+  // Attach servo to pin
+  myServo.attach(SERVO_PIN);
+  myServo.write(pos);
+  
+  Serial.println("System started - Servo at 90 degrees");
+  delay(1000);
+}
+
+void loop() {
+  // Read light intensity from sensors (0 - 4095 for ESP32 ADC)
+  int leftVal = analogRead(LDR_LEFT);
+  int rightVal = analogRead(LDR_RIGHT);
+
+  Serial.print("Left: "); Serial.print(leftVal);
+  Serial.print("  Right: "); Serial.print(rightVal);
+  Serial.print("  Pos: "); Serial.println(pos);
+
+  // Compare light intensity with exact tolerance of 100
+  if (rightVal > leftVal + TOLERANCE) {
+    // Right LDR is greater than left LDR + 100 - decrease angle by 90 degrees
+    pos = max(0, pos - 90);
+    Serial.println("Moving LEFT by 90 degrees");
+  } 
+  else if (leftVal > rightVal + TOLERANCE) {
+    // Left LDR is greater than right LDR + 100 - increase angle by 90 degrees
+    pos = min(180, pos + 90);
+    Serial.println("Moving RIGHT by 90 degrees");
+  }
+  // Else: leave the same state (no action)
+
+  // Write position to servo
+  myServo.write(pos);
+  delay(500); // Longer delay to prevent vibration and allow stable reading
+}
